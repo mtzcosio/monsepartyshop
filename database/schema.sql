@@ -100,6 +100,38 @@ CREATE TABLE product_files (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------
+-- Servicios (renta de mobiliario, decoración, cabinas, etc.)
+-- A diferencia de los productos, no se compran por carrito/checkout:
+-- se muestran como catálogo y el cliente solicita cotización por
+-- contacto.php (ver reason=cotizacion en contact_reason_options()).
+-- ---------------------------------------------------------
+CREATE TABLE services (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    slug VARCHAR(180) NOT NULL UNIQUE,
+    short_description VARCHAR(255) DEFAULT '',
+    description TEXT,
+    price_from DECIMAL(10,2) DEFAULT NULL,
+    image VARCHAR(255) DEFAULT '',
+    sort_order INT DEFAULT 0,
+    status ENUM('active','inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------
+-- Galería de imágenes adicionales por servicio
+-- ---------------------------------------------------------
+CREATE TABLE service_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    service_id INT NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------
 -- Pedidos
 -- ---------------------------------------------------------
 CREATE TABLE orders (
@@ -206,11 +238,27 @@ CREATE TABLE contact_messages (
 CREATE TABLE admin_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(150) DEFAULT NULL UNIQUE,
+    phone VARCHAR(20) DEFAULT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) DEFAULT '',
     failed_attempts INT DEFAULT 0,
     locked_until DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Solicitudes de recuperación de contraseña del admin (tokens de un solo uso).
+-- Se guarda el hash SHA-256 del token, nunca el token crudo (ese solo viaja en el
+-- correo), para que una fuga de la BD no sirva por sí sola para tomar la cuenta.
+CREATE TABLE admin_password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user_id INT NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_user_id) REFERENCES admin_users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- =========================================================

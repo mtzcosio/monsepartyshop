@@ -51,6 +51,10 @@ function email_builtin_variable_catalog() {
             'referencia_pago' => 'Referencia o CLABE que el cliente debe usar para completar su pago.',
             'fecha_vencimiento_pago' => 'Fecha y hora límite para completar el pago pendiente.',
         ],
+        'Recuperación de contraseña (admin)' => [
+            'url_reset' => 'Enlace de un solo uso para que el administrador cree su nueva contraseña.',
+            'expira_en' => 'Cuánto tiempo sigue siendo válido el enlace de recuperación (ej. "1 hora").',
+        ],
     ];
 }
 
@@ -170,6 +174,8 @@ function email_variable_sample_data() {
         'metodo_pago' => 'OXXO Pay',
         'referencia_pago' => '93000012345678',
         'fecha_vencimiento_pago' => date('d/m/Y H:i', strtotime('+3 days')),
+        'url_reset' => base_url('admin/reset_password.php?token=demo'),
+        'expira_en' => '1 hora',
     ];
     foreach (email_custom_variable_rows() as $row) {
         $data[$row['name']] = $row['sample_value'] !== '' ? $row['sample_value'] : '[' . $row['name'] . ']';
@@ -203,7 +209,7 @@ function email_find_unknown_variables($text) {
 
 /** Tipos de plantilla disponibles para el selector y el filtro. */
 function email_template_types() {
-    return ['Confirmación', 'Pago', 'Recordatorio', 'Notificación', 'Personalizado'];
+    return ['Confirmación', 'Pago', 'Recordatorio', 'Notificación', 'Seguridad', 'Personalizado'];
 }
 
 /**

@@ -443,6 +443,58 @@ function email_default_payment_reminder_html($data) {
 }
 
 /**
+ * Variables para el correo de recuperación de contraseña del admin. $token es el
+ * crudo (nunca se guarda así en BD, solo su hash) y solo vive en esta URL de un solo uso.
+ */
+function admin_password_reset_email_variable_data($admin, $token) {
+    return [
+        'nombre' => e($admin['name'] ?: $admin['username']),
+        'url_reset' => site_base_url() . admin_url('reset_password.php?token=' . urlencode($token)),
+        'expira_en' => '1 hora',
+        'nombre_empresa' => e(get_setting('store_name', 'Monse Party Shop')),
+    ];
+}
+
+/** Envía el correo de recuperación de contraseña del admin (disparado desde admin/forgot_password.php). */
+function send_admin_password_reset_email($admin, $token) {
+    $data = admin_password_reset_email_variable_data($admin, $token);
+
+    return send_templated_email(
+        'RECUPERAR_PASSWORD_ADMIN',
+        $admin['email'],
+        $data,
+        '🔒 Recupera tu contraseña de administrador',
+        email_default_admin_password_reset_html($data)
+    );
+}
+
+/** HTML por defecto del correo de recuperación, usado si no hay plantilla RECUPERAR_PASSWORD_ADMIN activa. */
+function email_default_admin_password_reset_html($data) {
+    $store_name = get_setting('store_name', 'Monse Party Shop');
+    $primary_color = get_setting('primary_color', '#FF6F91');
+    $logo = get_setting('logo', '');
+    $logo_html = $logo
+        ? '<img src="' . e($logo) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
+        : '<span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;">' . e($store_name) . '</span>';
+
+    return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f6f3f7;font-family:Arial,Helvetica,sans-serif;">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f3f7;padding:24px 0;"><tr><td align="center">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;">'
+        . '<tr><td align="center" style="background:' . e($primary_color) . ';padding:26px 20px;">' . $logo_html . '</td></tr>'
+        . '<tr><td style="padding:32px 30px 10px;">'
+        . '<h1 style="margin:0 0 14px;font-size:22px;color:#2c2438;">Hola, ' . $data['nombre'] . '</h1>'
+        . '<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#4b4453;">Recibimos una solicitud para restablecer la contraseña del panel administrativo de <strong>' . $data['nombre_empresa'] . '</strong>. Si fuiste tú, usa el siguiente botón:</p>'
+        . '</td></tr>'
+        . '<tr><td style="padding:0 30px 20px;">'
+        . '<p style="text-align:center;margin:0 0 20px;"><a href="' . e($data['url_reset']) . '" style="background:' . e($primary_color)
+        . ';color:#ffffff;padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-block;font-size:15px;">RESTABLECER CONTRASEÑA</a></p>'
+        . '<p style="margin:0;font-size:13px;color:#8a8195;line-height:1.6;">Este enlace expira en <strong>' . $data['expira_en'] . '</strong> y solo se puede usar una vez. Si tú no solicitaste esto, puedes ignorar este correo — tu contraseña actual seguirá funcionando.</p>'
+        . '</td></tr>'
+        . '<tr><td align="center" style="padding:18px 20px;background:#f6f3f7;font-size:12px;color:#a79fb0;">' . $data['nombre_empresa'] . '</td></tr>'
+        . '</table></td></tr></table></body></html>';
+}
+
+/**
  * Catálogos del formulario de contacto (contacto.php). Centralizados aquí para
  * que el formulario público y el panel admin (admin/contact_messages*.php)
  * siempre muestren las mismas opciones/etiquetas a partir del mismo valor

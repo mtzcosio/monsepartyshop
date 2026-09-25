@@ -169,7 +169,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 </div>
 
 <table class="admin-table">
-    <thead><tr><th>Nombre</th><th>Correo</th><th>Motivo</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Motivo</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead>
     <tbody>
         <?php foreach ($messages as $msg): ?>
         <tr>
@@ -178,7 +178,13 @@ require_once __DIR__ . '/includes/admin_header.php';
             <td><?= e($reason_options[$msg['reason']] ?? $msg['reason']) ?></td>
             <td><span class="badge-status <?= $msg['status'] === 'new' ? 'pending' : ($msg['status'] === 'archived' ? 'cancelled' : 'paid') ?>"><?= e($status_labels[$msg['status']] ?? $msg['status']) ?></span></td>
             <td><?= e(date('d/m/Y H:i', strtotime($msg['created_at']))) ?></td>
-            <td><a href="<?= admin_url('contact_message_detail.php?id=' . (int)$msg['id']) ?>" class="btn btn-secondary btn-sm">Ver</a></td>
+            <td>
+                <div class="row-actions">
+                    <a class="icon-action-btn" href="<?= admin_url('contact_message_detail.php?id=' . (int)$msg['id']) ?>" title="Ver mensaje">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                </div>
+            </td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$messages): ?>

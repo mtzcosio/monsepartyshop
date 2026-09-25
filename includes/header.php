@@ -38,6 +38,7 @@ $page_title = isset($page_title) ? $page_title . ' | ' . $store_name : $store_na
         <nav class="main-nav" id="mainNav">
             <a href="<?= base_url('index.php') ?>">Inicio</a>
             <a href="<?= base_url('productos.php') ?>">Plantillas</a>
+            <a href="<?= base_url('servicios.php') ?>">Servicios</a>
             <a href="<?= base_url('index.php#categorias') ?>">Categorías</a>
             <a href="<?= base_url('como-funciona.php') ?>">Cómo funciona</a>
             <a href="<?= base_url('contacto.php') ?>">Contacto</a>

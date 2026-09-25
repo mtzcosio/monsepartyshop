@@ -24,6 +24,17 @@ $posted = [
     'reason' => '', 'message' => '', 'preferred_contact' => '',
 ];
 
+// Prellenar el formulario cuando se llega desde "Solicitar cotización" en servicio.php.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && !empty($_GET['servicio'])) {
+    $service_stmt = get_db()->prepare("SELECT name FROM services WHERE slug = :slug AND status = 'active' LIMIT 1");
+    $service_stmt->execute(['slug' => $_GET['servicio']]);
+    $service_name = $service_stmt->fetchColumn();
+    if ($service_name) {
+        $posted['reason'] = 'cotizacion';
+        $posted['message'] = 'Me interesa el servicio: ' . $service_name . '. ';
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $posted['full_name'] = trim($_POST['full_name'] ?? '');
     $posted['email'] = trim($_POST['email'] ?? '');

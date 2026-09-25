@@ -7,15 +7,15 @@ if (admin_logged_in()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
+    $identifier = trim($_POST['identifier'] ?? '');
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error = 'Tu sesión expiró, intenta de nuevo.';
-    } elseif (admin_is_locked($username)) {
+    } elseif (admin_is_locked($identifier)) {
         $error = 'Cuenta bloqueada temporalmente por demasiados intentos fallidos. Intenta de nuevo en unos minutos.';
-    } elseif (admin_attempt_login($username, $_POST['password'] ?? '')) {
+    } elseif (admin_attempt_login($identifier, $_POST['password'] ?? '')) {
         redirect(admin_url('index.php'));
     } else {
-        $error = 'Usuario o contraseña incorrectos.';
+        $error = 'Correo/teléfono o contraseña incorrectos.';
     }
 }
 $store_name = get_setting('store_name', 'Monse Party Shop');
@@ -60,8 +60,8 @@ $store_name = get_setting('store_name', 'Monse Party Shop');
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
         <div class="form-group">
-            <label for="username">Usuario</label>
-            <input type="text" id="username" name="username" class="form-control" required autofocus>
+            <label for="identifier">Correo o teléfono</label>
+            <input type="text" id="identifier" name="identifier" class="form-control" required autofocus autocomplete="username">
         </div>
         <div class="form-group">
             <label for="password">Contraseña</label>
@@ -69,6 +69,7 @@ $store_name = get_setting('store_name', 'Monse Party Shop');
         </div>
         <button type="submit" class="btn btn-primary btn-block">INGRESAR</button>
     </form>
+    <p class="text-center" style="margin-top:20px;font-size:13.5px;"><a href="<?= e(admin_url('forgot_password.php')) ?>">¿Olvidaste tu contraseña?</a></p>
 </div>
 </body>
 </html>

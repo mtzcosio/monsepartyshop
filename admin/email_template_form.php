@@ -35,8 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $code_input = trim($_POST['code'] ?? '');
     $code = strtoupper(str_replace('-', '_', slugify($code_input !== '' ? $code_input : $name)));
     $type = trim($_POST['type'] ?? '') ?: 'Personalizado';
-    $sender_name = trim($_POST['sender_name'] ?? '');
-    $sender_email = trim($_POST['sender_email'] ?? '');
     $subject = trim($_POST['subject'] ?? '');
     $preheader = trim($_POST['preheader'] ?? '');
     $content_html = $_POST['content_html'] ?? '';
@@ -52,16 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($sender_email !== '' && !filter_var($sender_email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'El correo del remitente no tiene un formato válido.';
-    }
-
     if ($save_action === 'publish') {
         if ($subject === '') { $errors[] = 'El asunto es obligatorio para publicar la plantilla.'; }
         if (trim(strip_tags($content_html)) === '' && stripos($content_html, '<img') === false) {
             $errors[] = 'El contenido del correo es obligatorio para publicar la plantilla.';
         }
-        if ($sender_email === '') { $errors[] = 'El correo del remitente es obligatorio para publicar la plantilla.'; }
     }
 
     $unknown_vars = array_unique(array_merge(
@@ -77,22 +70,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = [
             'name' => $name, 'code' => $code, 'type' => $type,
             'status' => $save_action === 'publish' ? 'active' : 'draft',
-            'sender_name' => $sender_name, 'sender_email' => $sender_email,
             'subject' => $subject, 'preheader' => $preheader, 'content_html' => $content_html,
         ];
         if ($id) {
             $data['id'] = $id;
             $db->prepare(
                 'UPDATE email_templates SET name=:name, code=:code, type=:type, status=:status,
-                 sender_name=:sender_name, sender_email=:sender_email, subject=:subject, preheader=:preheader,
-                 content_html=:content_html WHERE id=:id'
+                 subject=:subject, preheader=:preheader, content_html=:content_html WHERE id=:id'
             )->execute($data);
             flash_set($save_action === 'publish' ? 'Plantilla guardada y publicada.' : 'Borrador guardado.');
             redirect(admin_url('email_template_form.php?id=' . $id));
         } else {
             $db->prepare(
-                'INSERT INTO email_templates (name, code, type, status, sender_name, sender_email, subject, preheader, content_html)
-                 VALUES (:name,:code,:type,:status,:sender_name,:sender_email,:subject,:preheader,:content_html)'
+                'INSERT INTO email_templates (name, code, type, status, subject, preheader, content_html)
+                 VALUES (:name,:code,:type,:status,:subject,:preheader,:content_html)'
             )->execute($data);
             $new_id = (int)$db->lastInsertId();
             flash_set($save_action === 'publish' ? 'Plantilla creada y publicada.' : 'Borrador creado.');
@@ -102,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $tpl = array_merge($tpl, [
         'name' => $name, 'code' => $code, 'type' => $type,
-        'sender_name' => $sender_name, 'sender_email' => $sender_email,
         'subject' => $subject, 'preheader' => $preheader, 'content_html' => $content_html,
     ]);
 }
@@ -167,11 +157,13 @@ require_once __DIR__ . '/includes/admin_header.php';
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="sender_name">Nombre del remitente</label>
-                        <input type="text" id="sender_name" name="sender_name" class="form-control" value="<?= e($tpl['sender_name']) ?>" placeholder="<?= e(get_setting('store_name', 'Monse Party Shop')) ?>">
+                        <input type="text" id="sender_name" class="form-control" value="<?= e(get_setting('store_name', 'Monse Party Shop')) ?>" disabled>
+                        <p class="settings-hint" style="margin-bottom:0;">Se toma del nombre de la tienda en <a href="<?= admin_url('settings.php') ?>" target="_blank">Configuración</a>.</p>
                     </div>
                     <div class="form-group">
                         <label for="sender_email">Correo del remitente</label>
-                        <input type="email" id="sender_email" name="sender_email" class="form-control" value="<?= e($tpl['sender_email']) ?>" placeholder="<?= e(get_setting('email', 'hola@tudominio.com')) ?>">
+                        <input type="email" id="sender_email" class="form-control" value="<?= e(get_setting('smtp_username', '') ?: get_setting('email', 'no-reply@example.com')) ?>" disabled>
+                        <p class="settings-hint" style="margin-bottom:0;">Se toma del usuario SMTP (o del correo de contacto) en <a href="<?= admin_url('settings.php') ?>" target="_blank">Configuración</a>.</p>
                     </div>
                 </div>
                 <div class="form-group">
@@ -468,7 +460,8 @@ function findUnknownVariables(text) {
 })();
 
 var lastFocusTarget = 'quill';
-['subject', 'preheader'].forEach(function (id) {
+var PLAIN_TEXT_VAR_FIELDS = ['subject', 'preheader'];
+PLAIN_TEXT_VAR_FIELDS.forEach(function (id) {
     var el = document.getElementById(id);
     if (el) { el.addEventListener('focus', function () { lastFocusTarget = id; }); }
 });
@@ -484,7 +477,7 @@ function insertAtCursor(input, text) {
 document.querySelectorAll('.js-insert-var').forEach(function (btn) {
     btn.addEventListener('click', function () {
         var token = '{{' + btn.getAttribute('data-var') + '}}';
-        if (lastFocusTarget === 'subject' || lastFocusTarget === 'preheader') {
+        if (PLAIN_TEXT_VAR_FIELDS.indexOf(lastFocusTarget) !== -1) {
             insertAtCursor(document.getElementById(lastFocusTarget), token);
         } else if (window.insertIntoQuill) {
             window.insertIntoQuill(token);
@@ -538,13 +531,13 @@ setTimeout(checkUnknownVariables, 400);
 
 /* Vista previa */
 document.getElementById('previewBtn').addEventListener('click', function () {
-    var senderName = document.getElementById('sender_name').value || '<?= e(get_setting('store_name', 'Monse Party Shop')) ?>';
-    var senderEmail = document.getElementById('sender_email').value || '<?= e(get_setting('email', '')) ?>';
+    var senderName = document.getElementById('sender_name').value;
+    var senderEmail = document.getElementById('sender_email').value;
     var subject = document.getElementById('subject').value;
     var preheader = document.getElementById('preheader').value;
     var content = window.getCurrentContentHtml ? window.getCurrentContentHtml() : '';
 
-    document.getElementById('previewFrom').textContent = senderName + ' <' + senderEmail + '>';
+    document.getElementById('previewFrom').textContent = renderVariables(senderName) + ' <' + renderVariables(senderEmail) + '>';
     document.getElementById('previewSubject').textContent = renderVariables(subject) || '(sin asunto)';
     if (preheader) {
         document.getElementById('previewPreheaderRow').style.display = 'block';
