@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_check($_POST['csrf_token'] ?? 
                 $filename = $file_field . '_' . uniqid() . '.' . $ext;
                 $dest = __DIR__ . '/../' . $dir . '/' . $filename;
                 if (move_uploaded_file($_FILES[$file_field]['tmp_name'], $dest)) {
-                    set_setting($file_field, base_url($dir . '/' . $filename));
+                    set_setting($file_field, $dir . '/' . $filename);
                 }
             }
         } elseif (!empty($_POST[$file_field . '_media_url'])) {
@@ -147,7 +147,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         <div class="form-grid">
             <div class="form-group">
                 <label for="logo">Logo</label>
-                <?php if (get_setting('logo')): ?><img src="<?= e(get_setting('logo')) ?>" style="max-height:50px;margin-bottom:8px;"><?php endif; ?>
+                <?php if (get_setting('logo')): ?><img src="<?= e(upload_url(get_setting('logo'))) ?>" style="max-height:50px;margin-bottom:8px;"><?php endif; ?>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                     <input type="file" id="logo" name="logo" class="form-control" accept="image/*" style="flex:1;min-width:180px;">
                     <?php render_media_picker_field('logo', 'Elegir de la biblioteca'); ?>
@@ -155,7 +155,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             </div>
             <div class="form-group">
                 <label for="favicon">Favicon</label>
-                <?php if (get_setting('favicon')): ?><img src="<?= e(get_setting('favicon')) ?>" style="max-height:32px;margin-bottom:8px;"><?php endif; ?>
+                <?php if (get_setting('favicon')): ?><img src="<?= e(upload_url(get_setting('favicon'))) ?>" style="max-height:32px;margin-bottom:8px;"><?php endif; ?>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                     <input type="file" id="favicon" name="favicon" class="form-control" accept="image/*" style="flex:1;min-width:180px;">
                     <?php render_media_picker_field('favicon', 'Elegir de la biblioteca'); ?>

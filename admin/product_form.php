@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $filename = uniqid('prod_') . '.' . $ext;
             $dest = __DIR__ . '/../uploads/products/' . $filename;
             if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
-                $data['image'] = base_url('uploads/products/' . $filename);
+                $data['image'] = 'uploads/products/' . $filename;
             }
         } else {
             $errors[] = 'La imagen debe ser JPG, PNG, WEBP o GIF.';
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $max_order++;
                     $img_stmt->execute([
                         'product_id' => $product_id,
-                        'image' => base_url('uploads/products/' . $g_filename),
+                        'image' => 'uploads/products/' . $g_filename,
                         'sort_order' => $max_order,
                     ]);
                 }
@@ -351,7 +351,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         <div id="tab-imagenes" class="tab-panel">
             <div class="form-group">
                 <label for="image">Imagen principal</label>
-                <?php if ($product['image']): ?><img src="<?= e($product['image']) ?>" style="max-width:100px;border-radius:8px;margin-bottom:8px;"><?php endif; ?>
+                <?php if ($product['image']): ?><img src="<?= e(upload_url($product['image'])) ?>" style="max-width:100px;border-radius:8px;margin-bottom:8px;"><?php endif; ?>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                     <input type="file" id="image" name="image" class="form-control" accept="image/*" style="flex:1;min-width:200px;">
                     <?php render_media_picker_field('image', 'Elegir de la biblioteca'); ?>
@@ -383,7 +383,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;">
                 <?php foreach ($gallery_images as $img): ?>
                     <div style="text-align:center;">
-                        <img src="<?= e($img['image']) ?>" style="width:120px;height:120px;object-fit:cover;border-radius:var(--radius-sm);display:block;margin-bottom:8px;">
+                        <img src="<?= e(upload_url($img['image'])) ?>" style="width:120px;height:120px;object-fit:cover;border-radius:var(--radius-sm);display:block;margin-bottom:8px;">
                         <form method="post" action="<?= admin_url('product_image_delete.php') ?>" onsubmit="return confirm('¿Eliminar esta imagen de la galería?');">
                             <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
                             <input type="hidden" name="image_id" value="<?= (int)$img['id'] ?>">

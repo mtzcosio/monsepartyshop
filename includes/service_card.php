@@ -4,7 +4,7 @@
 <div class="product-card">
     <div class="product-image">
         <?php if (!empty($service['image'])): ?>
-            <img src="<?= e($service['image']) ?>" alt="<?= e($service['name']) ?>">
+            <img src="<?= e(upload_url($service['image'])) ?>" alt="<?= e($service['name']) ?>">
         <?php else: ?>
             🎉
         <?php endif; ?>

@@ -58,6 +58,7 @@ function render_media_picker_field($field_id, $label = 'Elegir de la biblioteca'
                         <div class="media-card selectable js-media-picker-item"
                              data-search="<?= e(mb_strtolower($f['original_name'] . ' ' . $f['category'])) ?>"
                              data-url="<?= e(base_url($f['file_path'])) ?>"
+                             data-path="<?= e($f['file_path']) ?>"
                              data-name="<?= e($f['original_name']) ?>"
                              data-field="<?= e($field_id) ?>">
                             <div class="media-thumb">

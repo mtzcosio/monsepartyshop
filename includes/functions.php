@@ -57,6 +57,20 @@ function base_url($path = '') {
     return $base_path . '/' . ltrim($path, '/');
 }
 
+/**
+ * URL para mostrar un archivo subido (imagen de producto/servicio, logo, favicon...)
+ * cuyo valor se guarda en BD como ruta relativa "pura" (ej. "uploads/products/x.jpg",
+ * igual que ya hace media_library.file_path), sin el prefijo de entorno de base_url()
+ * horneado adentro. Así la ruta guardada sigue funcionando igual si el proyecto vive
+ * en la raíz del document root (hosting) o en una subcarpeta (XAMPP). Si el valor ya
+ * es una URL absoluta (http/https), se regresa tal cual.
+ */
+function upload_url($path) {
+    if ($path === null || $path === '') { return ''; }
+    if (preg_match('#^https?://#i', $path)) { return $path; }
+    return base_url($path);
+}
+
 function flash_set($message, $type = 'success') {
     $_SESSION['flash'] = ['message' => $message, 'type' => $type];
 }
@@ -193,8 +207,9 @@ function email_default_order_ready_html($data) {
     $store_name = get_setting('store_name', 'Monse Party Shop');
     $primary_color = get_setting('primary_color', '#FF6F91');
     $logo = get_setting('logo', '');
-    $logo_html = $logo
-        ? '<img src="' . e($logo) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
+    $logo_url = $logo ? site_base_url() . base_url($logo) : '';
+    $logo_html = $logo_url
+        ? '<img src="' . e($logo_url) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
         : '<span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;">' . e($store_name) . '</span>';
 
     return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f6f3f7;font-family:Arial,Helvetica,sans-serif;">'
@@ -351,8 +366,9 @@ function email_default_payment_pending_html($data) {
     $store_name = get_setting('store_name', 'Monse Party Shop');
     $primary_color = get_setting('primary_color', '#FF6F91');
     $logo = get_setting('logo', '');
-    $logo_html = $logo
-        ? '<img src="' . e($logo) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
+    $logo_url = $logo ? site_base_url() . base_url($logo) : '';
+    $logo_html = $logo_url
+        ? '<img src="' . e($logo_url) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
         : '<span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;">' . e($store_name) . '</span>';
 
     $reference_block = '';
@@ -408,8 +424,9 @@ function email_default_payment_reminder_html($data) {
     $store_name = get_setting('store_name', 'Monse Party Shop');
     $primary_color = get_setting('primary_color', '#FF6F91');
     $logo = get_setting('logo', '');
-    $logo_html = $logo
-        ? '<img src="' . e($logo) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
+    $logo_url = $logo ? site_base_url() . base_url($logo) : '';
+    $logo_html = $logo_url
+        ? '<img src="' . e($logo_url) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
         : '<span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;">' . e($store_name) . '</span>';
 
     $reference_block = '';
@@ -473,8 +490,9 @@ function email_default_admin_password_reset_html($data) {
     $store_name = get_setting('store_name', 'Monse Party Shop');
     $primary_color = get_setting('primary_color', '#FF6F91');
     $logo = get_setting('logo', '');
-    $logo_html = $logo
-        ? '<img src="' . e($logo) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
+    $logo_url = $logo ? site_base_url() . base_url($logo) : '';
+    $logo_html = $logo_url
+        ? '<img src="' . e($logo_url) . '" alt="' . e($store_name) . '" style="max-height:44px;">'
         : '<span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;color:#ffffff;">' . e($store_name) . '</span>';
 
     return '<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f6f3f7;font-family:Arial,Helvetica,sans-serif;">'

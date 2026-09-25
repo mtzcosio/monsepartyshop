@@ -14,7 +14,7 @@ if (!empty($product['old_price']) && $product['old_price'] > $product['price']) 
             <?php if (!empty($product['is_offer'])): ?><span class="badge badge-oferta">Oferta</span><?php endif; ?>
         </div>
         <?php if (!empty($product['image'])): ?>
-            <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?>">
+            <img src="<?= e(upload_url($product['image'])) ?>" alt="<?= e($product['name']) ?>">
         <?php else: ?>
             🎉
         <?php endif; ?>

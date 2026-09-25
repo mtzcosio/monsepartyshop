@@ -117,13 +117,14 @@ document.querySelectorAll('.js-media-picker-item').forEach(function (card) {
     card.addEventListener('click', function () {
         var field = card.getAttribute('data-field');
         var url = card.getAttribute('data-url');
+        var path = card.getAttribute('data-path');
         var name = card.getAttribute('data-name');
 
         if (field === 'quill_content' && window.insertQuillImage) {
             window.insertQuillImage(url);
         } else {
             var hidden = document.getElementById(field + '_media_url');
-            if (hidden) { hidden.value = url; }
+            if (hidden) { hidden.value = path; }
             var preview = document.getElementById(field + '_preview');
             if (preview) {
                 preview.style.display = 'flex';

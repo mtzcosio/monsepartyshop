@@ -25,8 +25,8 @@ $gallery_stmt->execute(['id' => $service['id']]);
 $gallery_images = array_column($gallery_stmt->fetchAll(), 'image');
 
 $all_images = [];
-if (!empty($service['image'])) { $all_images[] = $service['image']; }
-foreach ($gallery_images as $gimg) { $all_images[] = $gimg; }
+if (!empty($service['image'])) { $all_images[] = upload_url($service['image']); }
+foreach ($gallery_images as $gimg) { $all_images[] = upload_url($gimg); }
 
 $related_stmt = $db->prepare("SELECT * FROM services WHERE status = 'active' AND id != :id ORDER BY sort_order ASC, created_at DESC LIMIT 4");
 $related_stmt->execute(['id' => $service['id']]);

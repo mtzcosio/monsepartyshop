@@ -12,7 +12,7 @@ $page_title = isset($page_title) ? $page_title . ' | ' . $store_name : $store_na
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($page_title) ?></title>
 <?php if ($favicon): ?>
-<link rel="icon" href="<?= e($favicon) ?>">
+<link rel="icon" href="<?= e(upload_url($favicon)) ?>">
 <?php endif; ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@ $page_title = isset($page_title) ? $page_title . ' | ' . $store_name : $store_na
     <div class="header-inner">
         <a href="<?= base_url('index.php') ?>" class="logo">
             <?php if ($logo): ?>
-                <img src="<?= e($logo) ?>" alt="<?= e($store_name) ?>">
+                <img src="<?= e(upload_url($logo)) ?>" alt="<?= e($store_name) ?>">
             <?php else: ?>
                 <?= e($store_name) ?>
             <?php endif; ?>

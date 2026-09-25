@@ -63,8 +63,8 @@ $gallery_stmt->execute(['id' => $product['id']]);
 $gallery_images = array_column($gallery_stmt->fetchAll(), 'image');
 
 $all_images = [];
-if (!empty($product['image'])) { $all_images[] = $product['image']; }
-foreach ($gallery_images as $gimg) { $all_images[] = $gimg; }
+if (!empty($product['image'])) { $all_images[] = upload_url($product['image']); }
+foreach ($gallery_images as $gimg) { $all_images[] = upload_url($gimg); }
 ?>
 
 <div class="container">
