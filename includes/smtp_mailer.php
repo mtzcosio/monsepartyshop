@@ -4,6 +4,18 @@
  * Habla el protocolo SMTP directo por socket (EHLO, STARTTLS, AUTH LOGIN, DATA).
  */
 function smtp_send($params) {
+    // Defensa en profundidad: aunque todos los que llaman a send_email()/send_html_email()
+    // ya validan el correo con filter_var(FILTER_VALIDATE_EMAIL) antes de llegar aquí,
+    // se quita cualquier CR/LF por si un futuro llamador olvida validar — sin esto, un
+    // salto de línea en "to"/"from" permitiría inyectar comandos SMTP o cabeceras extra.
+    $strip_crlf = function ($value) {
+        return str_replace(["\r", "\n"], '', (string)$value);
+    };
+    $params['to'] = $strip_crlf($params['to']);
+    $params['from_email'] = $strip_crlf($params['from_email']);
+    $params['from_name'] = $strip_crlf($params['from_name']);
+    $params['subject'] = $strip_crlf($params['subject']);
+
     $host = $params['host'];
     $port = (int)$params['port'];
     $encryption = $params['encryption'];

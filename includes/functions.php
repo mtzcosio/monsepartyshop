@@ -27,6 +27,22 @@ function redirect($url) {
     exit;
 }
 
+/**
+ * Base absoluta (esquema + host) para armar URLs completas en correos y redirecciones
+ * de pasarela. Si el admin configuró "site_url" en Configuración, se usa tal cual
+ * (recomendado en producción: evita depender del header Host, que un cliente podría
+ * falsificar para inyectar un dominio ajeno en links de correo/Stripe). Sin configurar,
+ * cae a esquema+host de la petición actual (cómodo en desarrollo/XAMPP).
+ */
+function site_base_url() {
+    $configured = trim(get_setting('site_url', ''));
+    if ($configured !== '') {
+        return rtrim($configured, '/');
+    }
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+}
+
 function base_url($path = '') {
     static $base_path = null;
     if ($base_path === null) {
@@ -138,7 +154,7 @@ function order_ready_email_variable_data($order, $items) {
         $buttons_html .= '<p style="font-family:Arial,Helvetica,sans-serif;font-weight:700;margin:18px 0 8px;color:#2c2438;">'
             . e($item['product_name']) . '</p><p style="text-align:center;margin:0 0 10px;">';
         foreach ($item['files'] as $file) {
-            $download_url = 'http://' . $_SERVER['HTTP_HOST'] . base_url(
+            $download_url = site_base_url() . base_url(
                 'descargar.php?token=' . urlencode($order['download_token']) . '&item=' . (int)$item['id'] . '&file=' . (int)$file['id']
             );
             $label = $file['label'] ? mb_strtoupper($file['label']) : 'MI PLANTILLA';
@@ -159,7 +175,7 @@ function order_ready_email_variable_data($order, $items) {
         'codigo_confirmacion' => $order['order_code'],
         'estado_confirmacion' => 'Pagado',
         'fecha_confirmacion' => date('d/m/Y', strtotime($created_at)),
-        'url_confirmacion' => 'http://' . $_SERVER['HTTP_HOST'] . base_url('gracias.php?codigo=' . urlencode($order['order_code'])),
+        'url_confirmacion' => site_base_url() . base_url('gracias.php?codigo=' . urlencode($order['order_code'])),
         'nombre_empresa' => $store_name,
         'correo_soporte' => get_setting('email', 'hola@monsepartyshop.com'),
         'telefono_soporte' => get_setting('phone', ''),
@@ -168,7 +184,7 @@ function order_ready_email_variable_data($order, $items) {
         'productos_pedido' => implode('<br>', array_map('e', $product_names)),
         'fecha_vencimiento_descarga' => date('d/m/Y', strtotime($created_at . ' +' . $expiration_days . ' days')),
         'botones_descarga' => $buttons_html,
-        'url_rastreo_pedido' => 'http://' . $_SERVER['HTTP_HOST'] . base_url('rastrear-pedido.php'),
+        'url_rastreo_pedido' => site_base_url() . base_url('rastrear-pedido.php'),
     ];
 }
 
@@ -260,9 +276,9 @@ function stripe_generate_pay_link_for_order($order) {
     if (get_setting('stripe_spei_enabled', '0') === '1') { $stripe_method_types[] = 'customer_balance'; }
     if (!$stripe_method_types) { $stripe_method_types = ['card']; }
 
-    $site_base_url = 'http://' . $_SERVER['HTTP_HOST'];
-    $success_url = $site_base_url . base_url('gracias.php?codigo=' . urlencode($order['order_code']) . '&session_id={CHECKOUT_SESSION_ID}');
-    $cancel_url = $site_base_url . base_url('checkout.php');
+    $base_url = site_base_url();
+    $success_url = $base_url . base_url('gracias.php?codigo=' . urlencode($order['order_code']) . '&session_id={CHECKOUT_SESSION_ID}');
+    $cancel_url = $base_url . base_url('checkout.php');
 
     $metadata = [
         'pedido' => $order['order_code'],
@@ -300,7 +316,7 @@ function payment_pending_email_variable_data($order, $payment_method) {
     // el cliente pueda completar el cobro (a diferencia de OXXO/SPEI, que se pagan
     // fuera del sitio con solo la referencia). Si Stripe no responde, se cae al
     // enlace de siempre hacia gracias.php.
-    $confirmation_url = 'http://' . $_SERVER['HTTP_HOST'] . base_url('gracias.php?codigo=' . urlencode($order['order_code']));
+    $confirmation_url = site_base_url() . base_url('gracias.php?codigo=' . urlencode($order['order_code']));
     if (($order['payment_gateway'] ?? '') === 'stripe') {
         $pay_link = stripe_generate_pay_link_for_order($order);
         if ($pay_link) {
@@ -326,7 +342,7 @@ function payment_pending_email_variable_data($order, $payment_method) {
         'metodo_pago' => $method_label,
         'referencia_pago' => e((string)($order['payment_reference'] ?? '')),
         'fecha_vencimiento_pago' => !empty($order['payment_expires_at']) ? date('d/m/Y H:i', strtotime($order['payment_expires_at'])) : '',
-        'url_rastreo_pedido' => 'http://' . $_SERVER['HTTP_HOST'] . base_url('rastrear-pedido.php'),
+        'url_rastreo_pedido' => site_base_url() . base_url('rastrear-pedido.php'),
     ];
 }
 

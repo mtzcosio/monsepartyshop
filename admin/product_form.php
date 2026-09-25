@@ -143,13 +143,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!empty($_FILES['product_files']['name'][0])) {
-            $blocked_ext = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar', 'pht', 'exe', 'sh', 'bat', 'cmd', 'cgi', 'pl', 'py', 'asp', 'aspx', 'jsp', 'htaccess', 'htm', 'html'];
+            // Lista blanca (no negra): solo formatos de plantillas digitales esperados.
+            // uploads/downloads/ ya deniega todo acceso HTTP directo por Apache (ver su
+            // .htaccess), pero esta whitelist es una segunda barrera independiente de esa
+            // configuración por si el hosting no respeta el .htaccess.
+            $allowed_ext = ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'zip', 'rar', '7z',
+                'psd', 'ai', 'eps', 'indd', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv',
+                'mp4', 'mp3', 'ttf', 'otf', 'woff', 'woff2'];
             $max_file_order = (int)$db->query('SELECT COALESCE(MAX(sort_order), -1) FROM product_files WHERE product_id = ' . $product_id)->fetchColumn();
             $file_stmt = $db->prepare('INSERT INTO product_files (product_id, file_name, label, sort_order) VALUES (:product_id, :file_name, :label, :sort_order)');
             foreach ($_FILES['product_files']['name'] as $i => $original_name) {
                 if (empty($original_name)) { continue; }
                 $f_ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-                if (in_array($f_ext, $blocked_ext, true)) {
+                if (!in_array($f_ext, $allowed_ext, true)) {
                     $errors[] = 'El archivo "' . $original_name . '" no está permitido como descarga.';
                     continue;
                 }

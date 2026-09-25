@@ -17,7 +17,7 @@ ServerSignature Off
     </IfModule>
 </FilesMatch>
 
-# Bloquear cualquier archivo oculto (.env, .git, .htpasswd, etc.)
+# Bloquear cualquier archivo oculto (.env, .htpasswd, etc.)
 <FilesMatch "^\.">
     <IfModule mod_authz_core.c>
         Require all denied
@@ -28,9 +28,18 @@ ServerSignature Off
     </IfModule>
 </FilesMatch>
 
+# Bloquear el directorio .git completo. El bloqueo de "archivos ocultos" de arriba
+# NO alcanza a esto: <FilesMatch> solo evalúa el nombre del archivo, y los archivos
+# dentro de .git/ (HEAD, config, pack-*.pack, etc.) no empiezan con punto, así que
+# sin esta regla cualquiera podría reconstruir el repositorio completo pidiéndolos
+# uno por uno (ataque tipo "git dumper").
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\.git" - [F,L]
+</IfModule>
+
 # Forzar HTTPS en producción (deja esto comentado mientras pruebas en localhost/XAMPP;
 # descoméntalo cuando el sitio ya tenga SSL activo en el hosting).
-# RewriteEngine On
 # RewriteCond %{HTTPS} off
 # RewriteCond %{HTTP_HOST} !^localhost
 # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

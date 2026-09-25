@@ -204,7 +204,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                                     <div class="media-meta"><?= media_human_filesize($f['file_size']) ?> · <?= e(date('d/m/Y', strtotime($f['created_at']))) ?></div>
                                 </div>
                                 <div class="media-actions">
-                                    <button type="button" class="icon-action-btn" title="Copiar URL" data-copy-text="<?= e('http://' . $_SERVER['HTTP_HOST'] . base_url($f['file_path'])) ?>">
+                                    <button type="button" class="icon-action-btn" title="Copiar URL" data-copy-text="<?= e(site_base_url() . base_url($f['file_path'])) ?>">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                                     </button>
                                     <a class="icon-action-btn" href="<?= e(base_url($f['file_path'])) ?>" target="_blank" title="Ver / descargar">

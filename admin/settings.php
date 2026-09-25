@@ -4,7 +4,7 @@ require_admin_login();
 require_once __DIR__ . '/includes/media_picker.php';
 
 $fields = [
-    'store_name', 'store_description', 'email', 'phone', 'whatsapp',
+    'store_name', 'store_description', 'site_url', 'email', 'phone', 'whatsapp',
     'business_hours', 'address',
     'instagram', 'facebook', 'tiktok', 'tax_rate', 'currency',
     'download_expiration', 'max_downloads',
@@ -131,6 +131,17 @@ require_once __DIR__ . '/includes/admin_header.php';
             <div class="form-group">
                 <label for="store_description">Descripción / propuesta de valor</label>
                 <input type="text" id="store_description" name="store_description" class="form-control" value="<?= e(get_setting('store_description')) ?>">
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="site_url">URL del sitio (producción)</label>
+                <input type="text" id="site_url" name="site_url" class="form-control" value="<?= e(get_setting('site_url')) ?>" placeholder="https://www.tudominio.com">
+                <p class="settings-hint" style="margin-bottom:0;">
+                    Déjalo vacío para usar automáticamente el dominio de cada visita (cómodo en desarrollo/XAMPP).
+                    En producción, configúralo con tu dominio real: así los enlaces de correo, de rastreo de pedido y de pago
+                    no dependen del encabezado <code>Host</code> que envía el navegador del cliente (que podría manipularse).
+                </p>
             </div>
         </div>
         <div class="form-grid">
@@ -362,7 +373,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             </div>
             <p class="settings-hint" style="margin-bottom:0;">
                 URL del webhook para configurar en Conekta (Desarrollo → Webhooks):<br>
-                <code><?= e('http://' . $_SERVER['HTTP_HOST'] . base_url('webhook-conekta.php')) ?></code>
+                <code><?= e(site_base_url() . base_url('webhook-conekta.php')) ?></code>
             </p>
         </div>
 
@@ -398,7 +409,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             </div>
             <p class="settings-hint" style="margin-bottom:0;">
                 URL del webhook para configurar en Stripe (Desarrolladores → Webhooks → Agregar endpoint, evento <code>checkout.session.completed</code>):<br>
-                <code><?= e('http://' . $_SERVER['HTTP_HOST'] . base_url('webhook-stripe.php')) ?></code><br>
+                <code><?= e(site_base_url() . base_url('webhook-stripe.php')) ?></code><br>
                 Stripe te dará un "secreto de firma" (<code>whsec_...</code>) al crear el endpoint — pégalo arriba.
             </p>
         </div>

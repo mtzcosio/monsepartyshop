@@ -40,7 +40,7 @@ if ($conekta_enabled) {
     if ($conekta_spei_enabled) { $payment_options[] = ['value' => 'spei', 'label' => '🏦 Transferencia SPEI']; }
 }
 $real_gateway_active = !empty($payment_options);
-$site_base_url = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'];
+$site_base_url = site_base_url();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
