@@ -1,0 +1,13 @@
+# Credenciales reales (usar config/database.example.php como plantilla)
+config/database.php
+
+# Archivos digitales vendibles (contenido pagado, no versionar)
+uploads/downloads/*
+!uploads/downloads/.gitkeep
+!uploads/downloads/.htaccess
+
+# Sistema operativo / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/

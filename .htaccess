@@ -1,0 +1,36 @@
+# Endurecimiento general del sitio
+
+# No listar el contenido de carpetas que no tengan index
+Options -Indexes
+
+# Ocultar la versión/firma del servidor en páginas de error
+ServerSignature Off
+
+# Bloquear el acceso directo a archivos sensibles en cualquier carpeta
+<FilesMatch "\.(sql|log|env|ini|bak|sh|zip|tar|gz|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Bloquear cualquier archivo oculto (.env, .git, .htpasswd, etc.)
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Forzar HTTPS en producción (deja esto comentado mientras pruebas en localhost/XAMPP;
+# descoméntalo cuando el sitio ya tenga SSL activo en el hosting).
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteCond %{HTTP_HOST} !^localhost
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
