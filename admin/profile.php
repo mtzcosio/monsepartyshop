@@ -103,6 +103,10 @@ require_once __DIR__ . '/includes/admin_header.php';
             <input type="text" class="form-control" value="<?= e($admin['username']) ?>" disabled>
         </div>
         <div class="form-group">
+            <label>Rol</label>
+            <input type="text" class="form-control" value="<?= e(admin_role_label($admin['role'])) ?>" disabled>
+        </div>
+        <div class="form-group">
             <label for="name">Nombre</label>
             <input type="text" id="name" name="name" class="form-control" value="<?= e($admin['name']) ?>" required>
         </div>

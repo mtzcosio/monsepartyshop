@@ -6,6 +6,8 @@ if (admin_logged_in()) {
 }
 
 $error = '';
+$flash = flash_get();
+if ($flash && $flash['type'] === 'error') { $error = $flash['message']; }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $identifier = trim($_POST['identifier'] ?? '');
     if (!csrf_check($_POST['csrf_token'] ?? '')) {

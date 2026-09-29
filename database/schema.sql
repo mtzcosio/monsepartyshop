@@ -242,8 +242,11 @@ CREATE TABLE admin_users (
     phone VARCHAR(20) DEFAULT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) DEFAULT '',
+    role ENUM('super_admin', 'admin', 'editor') NOT NULL DEFAULT 'admin',
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     failed_attempts INT DEFAULT 0,
     locked_until DATETIME DEFAULT NULL,
+    last_login_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -266,8 +269,8 @@ CREATE TABLE admin_password_resets (
 -- =========================================================
 
 -- Usuario admin por defecto -> usuario: admin (cambiar la contraseña tras el primer login)
-INSERT INTO admin_users (username, password_hash, name) VALUES
-('admin', '$2y$10$PryU.sHGH8VzyMU01R2JrOlAsCL04TWG5mpVikakhxhujvvWNwwrG', 'Monse');
+INSERT INTO admin_users (username, password_hash, name, role) VALUES
+('admin', '$2y$10$PryU.sHGH8VzyMU01R2JrOlAsCL04TWG5mpVikakhxhujvvWNwwrG', 'Monse', 'super_admin');
 
 -- Configuración de marca
 INSERT INTO settings (setting_key, setting_value) VALUES
