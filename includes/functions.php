@@ -71,6 +71,16 @@ function upload_url($path) {
     return base_url($path);
 }
 
+/**
+ * URL de un asset estático (CSS/JS) con "?v=<fecha de modificación>" para romper la
+ * caché del navegador/hosting cada vez que el archivo cambia en el servidor.
+ */
+function asset_url($path) {
+    $file = __DIR__ . '/../' . ltrim($path, '/');
+    $version = is_file($file) ? filemtime($file) : '';
+    return base_url($path) . ($version ? '?v=' . $version : '');
+}
+
 function flash_set($message, $type = 'success') {
     $_SESSION['flash'] = ['message' => $message, 'type' => $type];
 }

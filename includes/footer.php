@@ -41,6 +41,6 @@ $whatsapp = get_setting('whatsapp', '');
         &copy; <?= date('Y') ?> <?= e($store_name) ?>. Todos los derechos reservados.
     </div>
 </footer>
-<script src="<?= base_url('assets/js/main.js') ?>"></script>
+<script src="<?= asset_url('assets/js/main.js') ?>"></script>
 </body>
 </html>

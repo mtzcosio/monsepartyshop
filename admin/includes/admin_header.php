@@ -27,8 +27,8 @@ $notif_messages_count = (int)get_db()->query("SELECT COUNT(*) FROM contact_messa
 <title><?= isset($page_title) ? e($page_title) . ' | Admin' : 'Admin' ?> - <?= e($store_name) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/admin.css') ?>">
+<link rel="stylesheet" href="<?= asset_url('assets/css/style.css') ?>">
+<link rel="stylesheet" href="<?= asset_url('assets/css/admin.css') ?>">
 </head>
 <body>
 <div class="admin-overlay" id="adminOverlay"></div>

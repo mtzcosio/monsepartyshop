@@ -39,7 +39,7 @@ $store_name = get_setting('store_name', 'Monse Party Shop');
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Restablecer contraseña - <?= e($store_name) ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
+<link rel="stylesheet" href="<?= asset_url('assets/css/style.css') ?>">
 <style>
     body {
         display: flex; align-items: center; justify-content: center; min-height: 100vh;
