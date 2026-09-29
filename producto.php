@@ -70,21 +70,38 @@ foreach ($gallery_images as $gimg) { $all_images[] = upload_url($gimg); }
 <div class="container">
     <div class="product-detail">
         <div class="product-gallery">
-            <div class="product-detail-image" id="mainProductImage">
-                <?php if (!empty($all_images)): ?>
-                    <img src="<?= e($all_images[0]) ?>" alt="<?= e($product['name']) ?>" id="mainProductImageTag">
-                <?php else: ?>
-                    🎉
+            <?php if (empty($all_images)): ?>
+                <div class="product-detail-image">🎉</div>
+            <?php else: ?>
+            <div class="carousel" data-carousel tabindex="0" aria-roledescription="carrusel" aria-label="Imágenes de <?= e($product['name']) ?>">
+                <div class="carousel-viewport">
+                    <div class="carousel-track">
+                        <?php foreach ($all_images as $i => $img_url): ?>
+                            <div class="carousel-slide" aria-roledescription="imagen" aria-label="<?= $i + 1 ?> de <?= count($all_images) ?>">
+                                <img src="<?= e($img_url) ?>" alt="<?= e($product['name']) ?> <?= $i + 1 ?>" <?= $i > 0 ? 'loading="lazy"' : '' ?> draggable="false">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php if (count($all_images) > 1): ?>
+                    <button type="button" class="carousel-btn carousel-prev" data-carousel-prev aria-label="Imagen anterior">&#8249;</button>
+                    <button type="button" class="carousel-btn carousel-next" data-carousel-next aria-label="Imagen siguiente">&#8250;</button>
+                    <div class="carousel-dots">
+                        <?php foreach ($all_images as $i => $img_url): ?>
+                            <button type="button" class="carousel-dot <?= $i === 0 ? 'active' : '' ?>" data-carousel-go="<?= $i ?>" aria-label="Ir a la imagen <?= $i + 1 ?>"></button>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
             <?php if (count($all_images) > 1): ?>
             <div class="product-thumbnails">
                 <?php foreach ($all_images as $i => $img_url): ?>
-                    <button type="button" class="product-thumbnail <?= $i === 0 ? 'active' : '' ?>" data-image="<?= e($img_url) ?>">
+                    <button type="button" class="product-thumbnail carousel-thumb <?= $i === 0 ? 'active' : '' ?>" data-carousel-go="<?= $i ?>" aria-label="Ver imagen <?= $i + 1 ?>">
                         <img src="<?= e($img_url) ?>" alt="<?= e($product['name']) ?> <?= $i + 1 ?>">
                     </button>
                 <?php endforeach; ?>
             </div>
+            <?php endif; ?>
             <?php endif; ?>
         </div>
         <div class="product-detail-info">

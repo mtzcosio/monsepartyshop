@@ -454,6 +454,69 @@ ul { margin: 0; padding: 0; list-style: none; }
 .product-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
 .product-thumbnail.active,
 .product-thumbnail:hover { border-color: var(--primary-color); }
+
+/* ---------- Carrusel de imágenes (detalle de producto y servicio) ---------- */
+.carousel {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: linear-gradient(135deg, #FFF0F4, #F3ECFB);
+    aspect-ratio: 1/1;
+    outline: none;
+}
+.carousel:focus-visible { box-shadow: 0 0 0 3px var(--primary-color); }
+.carousel-viewport { width: 100%; height: 100%; overflow: hidden; }
+.carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.45s ease;
+}
+.carousel-slide { flex: 0 0 100%; height: 100%; }
+.carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--primary-color);
+    font-size: 30px;
+    line-height: 1;
+    padding: 0 0 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s, transform 0.2s;
+}
+.carousel-btn:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+.carousel-prev { left: 12px; }
+.carousel-next { right: 12px; }
+.carousel-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+.carousel-dot.active { background: var(--primary-color); transform: scale(1.25); }
+@media (prefers-reduced-motion: reduce) {
+    .carousel-track { transition: none; }
+}
 .product-detail-info h1 { font-size: 32px; }
 .rating-stars { color: var(--secondary-color); font-size: 20px; letter-spacing: 2px; }
 .product-detail-desc { font-size: 16px; opacity: 0.85; margin: 16px 0; }
