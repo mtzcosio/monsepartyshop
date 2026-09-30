@@ -68,6 +68,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute($data);
         $service_id = $id ?: (int)$db->lastInsertId();
 
+        // Imágenes de galería marcadas para eliminar (se aplican junto con el resto del
+        // guardado). Scoped por service_id para que un POST manipulado no borre las de otro servicio.
+        $delete_image_ids = array_filter(array_map('intval', (array)($_POST['delete_images'] ?? [])));
+        $deleted_count = 0;
+        if ($id && $delete_image_ids) {
+            $del_img = $db->prepare('DELETE FROM service_images WHERE id = :id AND service_id = :service_id');
+            foreach ($delete_image_ids as $image_id) {
+                $del_img->execute(['id' => $image_id, 'service_id' => $service_id]);
+                $deleted_count += $del_img->rowCount();
+            }
+        }
+
         if (!empty($_FILES['gallery_images']['name'][0])) {
             $max_order = (int)$db->query('SELECT COALESCE(MAX(sort_order), -1) FROM service_images WHERE service_id = ' . $service_id)->fetchColumn();
             $img_stmt = $db->prepare('INSERT INTO service_images (service_id, image, sort_order) VALUES (:service_id, :image, :sort_order)');
@@ -88,7 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        flash_set($id ? 'Servicio actualizado.' : 'Servicio creado.');
+        $saved_message = $id ? 'Servicio actualizado.' : 'Servicio creado.';
+        if ($deleted_count > 0) {
+            $saved_message .= ' Se eliminaron ' . $deleted_count . ($deleted_count === 1 ? ' imagen de la galería.' : ' imágenes de la galería.');
+        }
+        flash_set($saved_message);
         redirect(admin_url('service_form.php?id=' . $service_id));
     }
 
@@ -205,32 +221,90 @@ require_once __DIR__ . '/includes/admin_header.php';
 
     </form>
 
+    <?php
+    // Si el guardado falló por validación, conservar lo que ya estaba marcado para eliminar.
+    $marked_images = array_map('intval', (array)($_POST['delete_images'] ?? []));
+    ?>
+
     <?php if ($id && $gallery_images): ?>
     <div id="tab-imagenes-existing" class="tab-panel" style="margin-top:24px;">
         <div class="settings-subcard">
-            <h4>Imágenes de la galería</h4>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <h4 style="margin:0;">Imágenes de la galería</h4>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" class="js-select-all" data-target="delete_images[]"> Seleccionar todas
+                </label>
+            </div>
+            <p class="settings-hint" style="margin:6px 0 0;">Marca las imágenes que quieras quitar; se eliminarán al pulsar "Guardar servicio".</p>
             <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;">
                 <?php foreach ($gallery_images as $img): ?>
-                    <div style="text-align:center;">
+                    <?php $checked = in_array((int)$img['id'], $marked_images, true); ?>
+                    <label class="js-delete-item <?= $checked ? 'marked-delete' : '' ?>" style="text-align:center;cursor:pointer;padding:6px;border-radius:var(--radius-sm);border:2px solid transparent;">
                         <img src="<?= e(upload_url($img['image'])) ?>" style="width:120px;height:120px;object-fit:cover;border-radius:var(--radius-sm);display:block;margin-bottom:8px;">
-                        <form method="post" action="<?= admin_url('service_image_delete.php') ?>" onsubmit="return confirm('¿Eliminar esta imagen de la galería?');">
-                            <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-                            <input type="hidden" name="image_id" value="<?= (int)$img['id'] ?>">
-                            <input type="hidden" name="service_id" value="<?= (int)$id ?>">
-                            <button type="submit" class="btn btn-secondary btn-sm">Eliminar</button>
-                        </form>
-                    </div>
+                        <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+                            <input type="checkbox" name="delete_images[]" value="<?= (int)$img['id'] ?>" form="serviceForm" <?= $checked ? 'checked' : '' ?>> Eliminar
+                        </span>
+                    </label>
                 <?php endforeach; ?>
             </div>
         </div>
     </div>
     <?php endif; ?>
 
+    <style>
+        .js-delete-item.marked-delete { border-color: var(--primary-color-dark) !important; background: var(--admin-primary-tint); }
+        .js-delete-item.marked-delete img { opacity: 0.45; }
+    </style>
+
     <div class="filter-actions" style="justify-content:flex-start;border-top:1px solid var(--admin-border);margin-top:28px;padding-top:22px;">
         <button type="submit" form="serviceForm" class="btn btn-primary">GUARDAR SERVICIO</button>
+        <span id="deletePendingNote" style="display:none;font-size:13px;color:var(--primary-color-dark);align-self:center;"></span>
         <a href="<?= admin_url('services.php') ?>" class="btn btn-secondary">Cancelar</a>
     </div>
 </div>
+
+<script>
+(function () {
+    var form = document.getElementById('serviceForm');
+    var note = document.getElementById('deletePendingNote');
+    var boxes = document.querySelectorAll('input[name="delete_images[]"]');
+    if (!form || !boxes.length) { return; }
+
+    function markedCount() {
+        return document.querySelectorAll('input[name="delete_images[]"]:checked').length;
+    }
+    function refresh() {
+        boxes.forEach(function (box) {
+            var item = box.closest('.js-delete-item');
+            if (item) { item.classList.toggle('marked-delete', box.checked); }
+        });
+        var n = markedCount();
+        document.querySelectorAll('.js-select-all').forEach(function (all) {
+            all.checked = n === boxes.length;
+            all.indeterminate = n > 0 && n < boxes.length;
+        });
+        note.style.display = n ? '' : 'none';
+        note.textContent = n ? n + (n === 1 ? ' imagen marcada' : ' imágenes marcadas') + ' para eliminar al guardar' : '';
+    }
+
+    boxes.forEach(function (box) { box.addEventListener('change', refresh); });
+    document.querySelectorAll('.js-select-all').forEach(function (all) {
+        all.addEventListener('change', function () {
+            boxes.forEach(function (b) { b.checked = all.checked; });
+            refresh();
+        });
+    });
+
+    form.addEventListener('submit', function (ev) {
+        var n = markedCount();
+        if (n && !confirm('Se eliminarán ' + n + (n === 1 ? ' imagen' : ' imágenes') + ' de la galería al guardar. ¿Continuar?')) {
+            ev.preventDefault();
+        }
+    });
+
+    refresh();
+})();
+</script>
 
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
