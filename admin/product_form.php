@@ -122,6 +122,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Imágenes de galería y archivos descargables marcados para eliminar (se aplican
+        // junto con el resto del guardado). Scoped por product_id para que un POST
+        // manipulado no pueda borrar elementos de otro producto.
+        $delete_image_ids = array_filter(array_map('intval', (array)($_POST['delete_images'] ?? [])));
+        $delete_file_ids = array_filter(array_map('intval', (array)($_POST['delete_files'] ?? [])));
+        $deleted_count = 0;
+
+        if ($id && $delete_image_ids) {
+            $del_img = $db->prepare('DELETE FROM product_images WHERE id = :id AND product_id = :product_id');
+            foreach ($delete_image_ids as $image_id) {
+                $del_img->execute(['id' => $image_id, 'product_id' => $product_id]);
+                $deleted_count += $del_img->rowCount();
+            }
+        }
+
+        if ($id && $delete_file_ids) {
+            $find_file = $db->prepare('SELECT file_name FROM product_files WHERE id = :id AND product_id = :product_id');
+            $del_file = $db->prepare('DELETE FROM product_files WHERE id = :id');
+            foreach ($delete_file_ids as $file_id) {
+                $find_file->execute(['id' => $file_id, 'product_id' => $product_id]);
+                $file = $find_file->fetch();
+                if (!$file) { continue; }
+                $del_file->execute(['id' => $file_id]);
+                $deleted_count++;
+                $path = __DIR__ . '/../uploads/downloads/' . basename($file['file_name']);
+                if (file_exists($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+
         if (!empty($_FILES['gallery_images']['name'][0])) {
             $max_order = (int)$db->query('SELECT COALESCE(MAX(sort_order), -1) FROM product_images WHERE product_id = ' . $product_id)->fetchColumn();
             $img_stmt = $db->prepare('INSERT INTO product_images (product_id, image, sort_order) VALUES (:product_id, :image, :sort_order)');
@@ -173,7 +204,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        flash_set($id ? 'Producto actualizado.' : 'Producto creado.');
+        $saved_message = $id ? 'Producto actualizado.' : 'Producto creado.';
+        if ($deleted_count > 0) {
+            $saved_message .= ' Se eliminaron ' . $deleted_count . ($deleted_count === 1 ? ' elemento.' : ' elementos.');
+        }
+        flash_set($saved_message);
         redirect(admin_url('product_form.php?id=' . $product_id));
     }
 
@@ -376,21 +411,31 @@ require_once __DIR__ . '/includes/admin_header.php';
 
     </form>
 
+    <?php
+    // Si el guardado falló por validación, conservar lo que ya estaba marcado para eliminar.
+    $marked_images = array_map('intval', (array)($_POST['delete_images'] ?? []));
+    $marked_files = array_map('intval', (array)($_POST['delete_files'] ?? []));
+    ?>
+
     <?php if ($id && $gallery_images): ?>
     <div id="tab-imagenes-existing" class="tab-panel" style="margin-top:24px;">
         <div class="settings-subcard">
-            <h4>Imágenes de la galería</h4>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <h4 style="margin:0;">Imágenes de la galería</h4>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <input type="checkbox" class="js-select-all" data-target="delete_images[]"> Seleccionar todas
+                </label>
+            </div>
+            <p class="settings-hint" style="margin:6px 0 0;">Marca las imágenes que quieras quitar; se eliminarán al pulsar "Guardar producto".</p>
             <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;">
                 <?php foreach ($gallery_images as $img): ?>
-                    <div style="text-align:center;">
+                    <?php $checked = in_array((int)$img['id'], $marked_images, true); ?>
+                    <label class="js-delete-item <?= $checked ? 'marked-delete' : '' ?>" style="text-align:center;cursor:pointer;padding:6px;border-radius:var(--radius-sm);border:2px solid transparent;">
                         <img src="<?= e(upload_url($img['image'])) ?>" style="width:120px;height:120px;object-fit:cover;border-radius:var(--radius-sm);display:block;margin-bottom:8px;">
-                        <form method="post" action="<?= admin_url('product_image_delete.php') ?>" onsubmit="return confirm('¿Eliminar esta imagen de la galería?');">
-                            <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-                            <input type="hidden" name="image_id" value="<?= (int)$img['id'] ?>">
-                            <input type="hidden" name="product_id" value="<?= (int)$id ?>">
-                            <button type="submit" class="btn btn-secondary btn-sm">Eliminar</button>
-                        </form>
-                    </div>
+                        <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+                            <input type="checkbox" name="delete_images[]" value="<?= (int)$img['id'] ?>" form="productForm" <?= $checked ? 'checked' : '' ?>> Eliminar
+                        </span>
+                    </label>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -400,22 +445,22 @@ require_once __DIR__ . '/includes/admin_header.php';
     <?php if ($id && $product_files): ?>
     <div id="tab-archivos-existing" class="tab-panel" style="margin-top:24px;">
         <div class="settings-subcard">
-            <h4>Archivos descargables</h4>
+            <h4 style="margin:0;">Archivos descargables</h4>
+            <p class="settings-hint" style="margin:6px 0 0;">Marca los archivos que quieras quitar; se eliminarán al pulsar "Guardar producto". Los clientes que ya compraron dejarán de poder descargarlos.</p>
             <table class="admin-table" style="margin-top:12px;">
-                <thead><tr><th>Archivo</th><th>Nombre visible</th><th></th></tr></thead>
+                <thead><tr>
+                    <th style="width:40px;"><input type="checkbox" class="js-select-all" data-target="delete_files[]" title="Seleccionar todos"></th>
+                    <th>Archivo</th><th>Nombre visible</th><th></th>
+                </tr></thead>
                 <tbody>
                     <?php foreach ($product_files as $file): ?>
-                    <tr>
+                    <?php $checked = in_array((int)$file['id'], $marked_files, true); ?>
+                    <tr class="js-delete-item <?= $checked ? 'marked-delete' : '' ?>">
+                        <td><input type="checkbox" name="delete_files[]" value="<?= (int)$file['id'] ?>" form="productForm" <?= $checked ? 'checked' : '' ?> aria-label="Eliminar <?= e($file['label']) ?>"></td>
                         <td><?= e($file['file_name']) ?></td>
                         <td><?= e($file['label']) ?></td>
-                        <td style="display:flex;gap:8px;">
+                        <td>
                             <a href="<?= admin_url('product_file_preview.php?file_id=' . (int)$file['id']) ?>" target="_blank" class="btn btn-secondary btn-sm">Previsualizar</a>
-                            <form method="post" action="<?= admin_url('product_file_delete.php') ?>" onsubmit="return confirm('¿Eliminar este archivo?');">
-                                <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-                                <input type="hidden" name="file_id" value="<?= (int)$file['id'] ?>">
-                                <input type="hidden" name="product_id" value="<?= (int)$id ?>">
-                                <button type="submit" class="btn btn-secondary btn-sm">Eliminar</button>
-                            </form>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -425,11 +470,64 @@ require_once __DIR__ . '/includes/admin_header.php';
     </div>
     <?php endif; ?>
 
+    <style>
+        .js-delete-item.marked-delete { border-color: var(--primary-color-dark) !important; background: var(--admin-primary-tint); }
+        .js-delete-item.marked-delete img { opacity: 0.45; }
+        tr.js-delete-item.marked-delete td { text-decoration: line-through; opacity: 0.7; }
+        tr.js-delete-item.marked-delete td:first-child, tr.js-delete-item.marked-delete td:last-child { text-decoration: none; }
+    </style>
+
     <div class="filter-actions" style="justify-content:flex-start;border-top:1px solid var(--admin-border);margin-top:28px;padding-top:22px;">
         <button type="submit" form="productForm" class="btn btn-primary">GUARDAR PRODUCTO</button>
+        <span id="deletePendingNote" style="display:none;font-size:13px;color:var(--primary-color-dark);align-self:center;"></span>
         <a href="<?= admin_url('products.php') ?>" class="btn btn-secondary">Cancelar</a>
     </div>
 </div>
+
+<script>
+(function () {
+    var form = document.getElementById('productForm');
+    var note = document.getElementById('deletePendingNote');
+    var boxes = document.querySelectorAll('input[name="delete_images[]"], input[name="delete_files[]"]');
+    if (!form || !boxes.length) { return; }
+
+    function markedCount() {
+        return document.querySelectorAll('input[name="delete_images[]"]:checked, input[name="delete_files[]"]:checked').length;
+    }
+    function refresh() {
+        boxes.forEach(function (box) {
+            var item = box.closest('.js-delete-item');
+            if (item) { item.classList.toggle('marked-delete', box.checked); }
+        });
+        document.querySelectorAll('.js-select-all').forEach(function (all) {
+            var group = document.querySelectorAll('input[name="' + all.getAttribute('data-target') + '"]');
+            var checked = Array.prototype.filter.call(group, function (b) { return b.checked; }).length;
+            all.checked = group.length > 0 && checked === group.length;
+            all.indeterminate = checked > 0 && checked < group.length;
+        });
+        var n = markedCount();
+        note.style.display = n ? '' : 'none';
+        note.textContent = n ? n + (n === 1 ? ' elemento marcado' : ' elementos marcados') + ' para eliminar al guardar' : '';
+    }
+
+    boxes.forEach(function (box) { box.addEventListener('change', refresh); });
+    document.querySelectorAll('.js-select-all').forEach(function (all) {
+        all.addEventListener('change', function () {
+            document.querySelectorAll('input[name="' + all.getAttribute('data-target') + '"]').forEach(function (b) { b.checked = all.checked; });
+            refresh();
+        });
+    });
+
+    form.addEventListener('submit', function (ev) {
+        var n = markedCount();
+        if (n && !confirm('Se eliminarán ' + n + (n === 1 ? ' elemento' : ' elementos') + ' de forma permanente al guardar. ¿Continuar?')) {
+            ev.preventDefault();
+        }
+    });
+
+    refresh();
+})();
+</script>
 
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
