@@ -535,6 +535,7 @@ function contact_reason_options() {
         'soporte' => 'Soporte con mi pedido',
         'facturacion' => 'Facturación',
         'alianza' => 'Alianza o negocio',
+        'privacidad' => 'Privacidad y datos personales (ARCO)',
         'otro' => 'Otro',
     ];
 }

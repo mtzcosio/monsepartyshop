@@ -32,7 +32,7 @@ $whatsapp = get_setting('whatsapp', '');
             <ul>
                 <li><a href="<?= base_url('rastrear-pedido.php') ?>">Rastrear mi pedido</a></li>
                 <li><a href="<?= base_url('terminos.php') ?>">Términos y condiciones</a></li>
-                <li><a href="<?= base_url('privacidad.php') ?>">Política de privacidad</a></li>
+                <li><a href="<?= base_url('privacidad.php') ?>">Aviso de privacidad</a></li>
                 <li><a href="<?= base_url('politica-descargas.php') ?>">Política de descargas</a></li>
             </ul>
         </div>
